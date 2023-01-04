@@ -1,4 +1,4 @@
-module goWeb
+module github.com/renzobalbo/goWeb
 
 go 1.19
 
