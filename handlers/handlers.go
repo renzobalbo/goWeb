@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/renzobalbo/goWeb/dia1/E2.2/global"
+	"github.com/renzobalbo/goWeb/global"
 )
 
 func Pong(ctx *gin.Context) {

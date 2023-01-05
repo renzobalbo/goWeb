@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 
 	"github.com/gin-gonic/gin"
-	"github.com/renzobalbo/goWeb/dia1/E2.2/global"
-	"github.com/renzobalbo/goWeb/dia1/E2.2/handlers"
+	"github.com/renzobalbo/goWeb/global"
+	"github.com/renzobalbo/goWeb/handlers"
 )
 
 func LoadJson() {
