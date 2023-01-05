@@ -7,6 +7,8 @@ import (
 	"github.com/renzobalbo/goWeb/global"
 )
 
+// Metodos GET
+
 func Pong(ctx *gin.Context) {
 	ctx.String(200, "pong")
 }
@@ -70,4 +72,31 @@ func ProductsPriceGt(ctx *gin.Context) {
 		"message": "Products filtered:",
 		"data":    filteredProducts,
 	})
+}
+
+// Metodos POST
+
+type request struct {
+	Name        string  `json:"name"`
+	Quantity    int     `json:"quantity"`
+	CodeValue   string  `json:"code_value"`
+	IsPublished bool    `json:"is_published"`
+	Expiration  string  `json:"expiration"`
+	Price       float64 `json:"price"`
+}
+
+func AddProduct(ctx *gin.Context) {
+	var req request
+	err := ctx.ShouldBind(&req)
+
+	if err != nil {
+		ctx.JSON(400, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+	global.LastId++
+	newProd := global.Producto{Id: global.LastId, Name: req.Name, Quantity: req.Quantity, CodeValue: req.CodeValue, IsPublished: req.IsPublished, Expiration: req.Expiration, Price: req.Price}
+	global.Productos = append(global.Productos, newProd)
+	ctx.JSON(201, req)
 }

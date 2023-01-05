@@ -6,12 +6,12 @@ import (
 	"io/ioutil"
 
 	"github.com/gin-gonic/gin"
+	"github.com/renzobalbo/goWeb/cmd/server/handlers"
 	"github.com/renzobalbo/goWeb/global"
-	"github.com/renzobalbo/goWeb/handlers"
 )
 
 func LoadJson() {
-	data, err := ioutil.ReadFile("./dia1/products.json")
+	data, err := ioutil.ReadFile("./products.json")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -21,6 +21,8 @@ func LoadJson() {
 		fmt.Println(err)
 		return
 	}
+
+	global.LastId = len(global.Productos)
 }
 
 func main() {
@@ -32,6 +34,9 @@ func main() {
 	router.GET("/products", handlers.Products)
 	router.GET("/products/:id", handlers.ProductId)
 	router.GET("/products/search", handlers.ProductsPriceGt)
+
+	//Metodo Post
+	router.POST("/products", handlers.AddProduct)
 
 	router.Run()
 }

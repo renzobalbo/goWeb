@@ -11,3 +11,5 @@ type Producto struct {
 }
 
 var Productos = make([]Producto, 0)
+
+var LastId int
