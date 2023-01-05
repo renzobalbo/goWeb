@@ -27,10 +27,10 @@ func ProductId(ctx *gin.Context) {
 		})
 		return
 	}
-	var actualProduct global.Producto
-	for _, a := range global.Productos {
+	actualProduct := global.Producto{}
+	for i, a := range global.Productos {
 		if a.Id == tempId {
-			actualProduct = a
+			actualProduct = global.Productos[i]
 			break
 		}
 	}
@@ -51,7 +51,7 @@ func ProductId(ctx *gin.Context) {
 }
 
 func ProductsPriceGt(ctx *gin.Context) {
-	priceQuery, err := strconv.Atoi(ctx.Query("price"))
+	priceQuery, err := strconv.ParseFloat(ctx.Query("price"), 64)
 	if err != nil {
 		ctx.JSON(404, gin.H{
 			"message": "Couldn't find a match",
