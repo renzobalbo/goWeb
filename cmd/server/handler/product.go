@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -127,5 +128,110 @@ func (h *productHandler) Post() gin.HandlerFunc {
 			return
 		}
 		ctx.JSON(201, p)
+	}
+}
+
+// Put modifica todas las propiedades de un producto
+
+func (h *productHandler) Update() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+		if err != nil {
+			ctx.JSON(400, gin.H{
+				"error": "invalid id",
+			})
+			return
+		}
+		var product domain.Product
+		if err := ctx.ShouldBind(&product); err != nil {
+			ctx.JSON(400, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		if product.Name == "" {
+			ctx.JSON(400, gin.H{
+				"error": "the name of the product is empty",
+			})
+			return
+		}
+		if product.Quantity == 0 {
+			ctx.JSON(400, gin.H{
+				"error": "you need to specify the quantity",
+			})
+			return
+		}
+		if product.CodeValue == "" {
+			ctx.JSON(400, gin.H{
+				"error": "the code value is empty",
+			})
+			return
+		}
+		if product.Expiration == "" {
+			ctx.JSON(400, gin.H{
+				"error": "you need to specify an expiration date",
+			})
+			return
+		}
+		if product.Price == 0 {
+			ctx.JSON(400, gin.H{
+				"error": "you need to specify a price",
+			})
+			return
+		}
+
+		p, err := h.s.Update(int(id), product.Name, product.Quantity, product.CodeValue, product.IsPublished, product.Expiration, product.Price)
+		if err != nil {
+			ctx.JSON(404, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		ctx.JSON(200, p)
+
+	}
+}
+
+func (h *productHandler) UpdatePrice() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+		if err != nil {
+			ctx.JSON(400, gin.H{
+				"error": "invalid id",
+			})
+			return
+		}
+
+		var product domain.Product
+		if err := ctx.ShouldBindJSON(&product); err != nil {
+			ctx.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		if product.Price == 0 {
+			ctx.JSON(400, gin.H{"error": "you need to specify a new price"})
+			return
+		}
+		p, err := h.s.UpdatePrice(int(id), product.Price)
+		if err != nil {
+			ctx.JSON(404, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(200, p)
+	}
+}
+
+func (h *productHandler) Delete() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+		if err != nil {
+			ctx.JSON(400, gin.H{"error": "invalid id"})
+			return
+		}
+		err = h.s.Delete(int(id))
+		if err != nil {
+			ctx.JSON(404, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(200, gin.H{"data": fmt.Sprintf("the product with the id %d has been deleted", id)})
 	}
 }

@@ -27,6 +27,9 @@ func main() {
 		products.GET(":id", productHandler.GetByID())
 		products.GET("/search", productHandler.Search())
 		products.POST("", productHandler.Post())
+		products.PUT("/:id", productHandler.Update())
+		products.PATCH("/:id", productHandler.UpdatePrice())
+		products.DELETE("/:id", productHandler.Delete())
 	}
 	r.Run(":8080")
 }
