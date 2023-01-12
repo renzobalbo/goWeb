@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -106,6 +107,13 @@ func validateExpiration(product *domain.Product) (bool, error) {
 // Post crear un producto nuevo
 func (h *productHandler) Post() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+
+		token := ctx.GetHeader("token")
+		if token != os.Getenv("TOKEN") {
+			ctx.JSON(401, gin.H{"error": "invalid token"})
+			return
+		}
+
 		var product domain.Product
 		err := ctx.ShouldBindJSON(&product)
 		if err != nil {
@@ -135,13 +143,21 @@ func (h *productHandler) Post() gin.HandlerFunc {
 
 func (h *productHandler) Update() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+
+		token := ctx.GetHeader("token")
+		if token != os.Getenv("TOKEN") {
+			ctx.JSON(401, gin.H{"error": "invalid token"})
+			return
+		}
+
+		_, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 		if err != nil {
 			ctx.JSON(400, gin.H{
 				"error": "invalid id",
 			})
 			return
 		}
+
 		var product domain.Product
 		if err := ctx.ShouldBind(&product); err != nil {
 			ctx.JSON(400, gin.H{
@@ -180,7 +196,7 @@ func (h *productHandler) Update() gin.HandlerFunc {
 			return
 		}
 
-		p, err := h.s.Update(int(id), product.Name, product.Quantity, product.CodeValue, product.IsPublished, product.Expiration, product.Price)
+		p, err := h.s.Update(product)
 		if err != nil {
 			ctx.JSON(404, gin.H{
 				"error": err.Error(),
@@ -194,7 +210,14 @@ func (h *productHandler) Update() gin.HandlerFunc {
 
 func (h *productHandler) UpdatePrice() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+
+		token := ctx.GetHeader("token")
+		if token != os.Getenv("TOKEN") {
+			ctx.JSON(401, gin.H{"error": "invalid token"})
+			return
+		}
+
+		_, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 		if err != nil {
 			ctx.JSON(400, gin.H{
 				"error": "invalid id",
@@ -211,7 +234,7 @@ func (h *productHandler) UpdatePrice() gin.HandlerFunc {
 			ctx.JSON(400, gin.H{"error": "you need to specify a new price"})
 			return
 		}
-		p, err := h.s.UpdatePrice(int(id), product.Price)
+		p, err := h.s.UpdatePrice(product, product.Price)
 		if err != nil {
 			ctx.JSON(404, gin.H{"error": err.Error()})
 			return
@@ -222,6 +245,13 @@ func (h *productHandler) UpdatePrice() gin.HandlerFunc {
 
 func (h *productHandler) Delete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+
+		token := ctx.GetHeader("token")
+		if token != os.Getenv("TOKEN") {
+			ctx.JSON(401, gin.H{"error": "invalid token"})
+			return
+		}
+
 		id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 		if err != nil {
 			ctx.JSON(400, gin.H{"error": "invalid id"})

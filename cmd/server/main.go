@@ -1,20 +1,23 @@
 package main
 
 import (
-	"encoding/json"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/renzobalbo/goWeb/cmd/server/handler"
-	"github.com/renzobalbo/goWeb/internal/domain"
 	"github.com/renzobalbo/goWeb/internal/product"
+	"github.com/renzobalbo/goWeb/pkg/store"
 )
 
 func main() {
-	var productsList = []domain.Product{}
-	loadProducts("products.json", &productsList)
+	err := godotenv.Load("./.env")
+	if err != nil {
+		panic(err)
+	}
 
-	repo := product.NewRepository(productsList)
+	db := store.NewStorage(os.Getenv("DB_FILE_NAME"))
+	repo := product.NewRepository(db)
 	service := product.NewService(repo)
 	productHandler := handler.NewProductHandler(service)
 
@@ -35,13 +38,13 @@ func main() {
 }
 
 // loadProducts carga los productos desde un archivo json
-func loadProducts(path string, list *[]domain.Product) {
-	file, err := os.ReadFile(path)
-	if err != nil {
-		panic(err)
-	}
-	err = json.Unmarshal([]byte(file), &list)
-	if err != nil {
-		panic(err)
-	}
-}
+// func loadProducts(path string, list *[]domain.Product) {
+// 	file, err := os.ReadFile(path)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	err = json.Unmarshal([]byte(file), &list)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// }

@@ -11,8 +11,8 @@ type Service interface {
 	GetByID(id int) (domain.Product, error)
 	SearchPriceGt(price float64) ([]domain.Product, error)
 	Create(p domain.Product) (domain.Product, error)
-	Update(id int, name string, quantity int, codeValue string, isPublished bool, expiration string, price float64) (domain.Product, error)
-	UpdatePrice(id int, price float64) (domain.Product, error)
+	Update(product domain.Product) (domain.Product, error)
+	UpdatePrice(product domain.Product, price float64) (domain.Product, error)
 	Delete(id int) error
 }
 
@@ -58,13 +58,13 @@ func (s *service) Create(p domain.Product) (domain.Product, error) {
 	return p, nil
 }
 
-func (s *service) Update(id int, name string, quantity int, codeValue string, isPublished bool, expiration string, price float64) (domain.Product, error) {
-	return s.r.Update(id, name, quantity, codeValue, isPublished, expiration, price)
+func (s *service) Update(product domain.Product) (domain.Product, error) {
+	return s.r.Update(product)
 }
 
 // updatePrice actualiza el precio de un producto
-func (s *service) UpdatePrice(id int, price float64) (domain.Product, error) {
-	return s.r.UpdatePrice(id, price)
+func (s *service) UpdatePrice(product domain.Product, price float64) (domain.Product, error) {
+	return s.r.UpdatePrice(product, price)
 }
 
 func (s *service) Delete(id int) error {

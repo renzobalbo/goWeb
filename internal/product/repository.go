@@ -2,9 +2,9 @@ package product
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/renzobalbo/goWeb/internal/domain"
+	"github.com/renzobalbo/goWeb/pkg/store"
 )
 
 type Repository interface {
@@ -12,60 +12,72 @@ type Repository interface {
 	GetByID(id int) (domain.Product, error)
 	SearchPriceGt(price float64) []domain.Product
 	Create(p domain.Product) (domain.Product, error)
-	Update(id int, name string, quantity int, codeValue string, isPublished bool, expiration string, price float64) (domain.Product, error)
-	UpdatePrice(id int, price float64) (domain.Product, error)
+	Update(product domain.Product) (domain.Product, error)
+	UpdatePrice(product domain.Product, price float64) (domain.Product, error)
 	Delete(id int) error
 }
 
 type repository struct {
-	list []domain.Product
+	storage store.Storage
 }
 
 // NewRepository crea un nuevo repositorio
-func NewRepository(list []domain.Product) Repository {
-	return &repository{list}
+func NewRepository(storage store.Storage) Repository {
+	return &repository{storage}
 }
 
 // GetAll devuelve todos los productos
 func (r *repository) GetAll() []domain.Product {
-	return r.list
+	products, err := r.storage.GetAll()
+	if err != nil {
+		return []domain.Product{}
+	}
+	return products
 }
 
 // GetByID busca un producto por su id
 func (r *repository) GetByID(id int) (domain.Product, error) {
-	for _, product := range r.list {
-		if product.Id == id {
-			return product, nil
-		}
+	product, err := r.storage.GetById(id)
+	if err != nil {
+		return domain.Product{}, err
 	}
-	return domain.Product{}, errors.New("product not found")
-
+	return product, nil
 }
 
 // SearchPriceGt busca productos por precio mayor o igual que el precio dado
 func (r *repository) SearchPriceGt(price float64) []domain.Product {
-	var products []domain.Product
-	for _, product := range r.list {
-		if product.Price > price {
-			products = append(products, product)
+	var productsGt []domain.Product
+	products, err := r.storage.GetAll()
+	if err != nil {
+		return productsGt
+	}
+	for _, p := range products {
+		if p.Price > price {
+			productsGt = append(productsGt, p)
 		}
 	}
-	return products
+	return productsGt
 }
 
 // Create agrega un nuevo producto
 func (r *repository) Create(p domain.Product) (domain.Product, error) {
 	if !r.validateCodeValue(p.CodeValue) {
-		return domain.Product{}, errors.New("code value already exists")
+		return domain.Product{}, errors.New("code value already exist")
 	}
-	p.Id = len(r.list) + 1
-	r.list = append(r.list, p)
+	err := r.storage.Create(p)
+	if err != nil {
+		return domain.Product{}, errors.New("error creating product")
+	}
 	return p, nil
 }
 
 // validateCodeValue valida que el codigo no exista en la lista de productos
 func (r *repository) validateCodeValue(codeValue string) bool {
-	for _, product := range r.list {
+	products, err := r.storage.GetAll()
+	if err != nil {
+		return false
+	}
+	for _, product := range products {
 		if product.CodeValue == codeValue {
 			return false
 		}
@@ -74,51 +86,30 @@ func (r *repository) validateCodeValue(codeValue string) bool {
 }
 
 // update actualiza todos los campos de un producto
-func (r *repository) Update(id int, name string, quantity int, codeValue string, isPublished bool, expiration string, price float64) (domain.Product, error) {
-	p := domain.Product{Name: name, Quantity: quantity, CodeValue: codeValue, IsPublished: isPublished, Expiration: expiration, Price: price}
-	updated := false
-	for i := range r.list {
-		if r.list[i].Id == id {
-			p.Id = id
-			r.list[i] = p
-			updated = true
-		}
+func (r *repository) Update(product domain.Product) (domain.Product, error) {
+	if !r.validateCodeValue(product.CodeValue) {
+		return domain.Product{}, errors.New("code value already exist")
 	}
-	if !updated {
-		return domain.Product{}, fmt.Errorf("couldn't find a product with the id: %d", id)
+	err := r.storage.Update(product)
+	if err != nil {
+		return domain.Product{}, errors.New("error updating the product")
 	}
-	return p, nil
+	return product, nil
 }
 
 // updatePrice actualiza el precio de un producto
-func (r *repository) UpdatePrice(id int, price float64) (domain.Product, error) {
-	var p domain.Product
-	updated := false
-	for i := range r.list {
-		if r.list[i].Id == id {
-			r.list[i].Price = price
-			updated = true
-			p = r.list[i]
-		}
-	}
-	if !updated {
-		return domain.Product{}, fmt.Errorf("couldn't find a product with the id: %d", id)
+func (r *repository) UpdatePrice(product domain.Product, price float64) (domain.Product, error) {
+	p, err := r.storage.UpdatePrice(product, price)
+	if err != nil {
+		return domain.Product{}, err
 	}
 	return p, nil
 }
 
 func (r *repository) Delete(id int) error {
-	deleted := false
-	var index int
-	for i := range r.list {
-		if r.list[i].Id == id {
-			index = i
-			deleted = true
-		}
+	err := r.storage.Delete(id)
+	if err != nil {
+		return err
 	}
-	if !deleted {
-		return fmt.Errorf("couldn't find a product with the id: %d", id)
-	}
-	r.list = append(r.list[:index], r.list[index+1:]...)
 	return nil
 }
